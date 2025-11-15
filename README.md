@@ -25,10 +25,11 @@ Siga os passos abaixo para executar o projeto localmente.
 ### 1. Pré-requisitos
 * [Node.js](https://nodejs.org/) (versão 14 ou superior)
 * [MongoDB](https://www.mongodb.com/try/download/community) rodando na sua máquina.
+* [Postman](https://dl.pstmn.io/download/latest/win64) **Recomendado** para manuseio da API.
 
 ### 2. Clone o Repositório
 ```sh
-git clone https://github.com/felipebataglini/Projeto_1_-_WEBBackEnd
+git clone https://github.com/felipebataglini/Projeto_2_-_WEBBackEnd
 cd <nome-da-pasta>
 ```
 
@@ -59,6 +60,7 @@ O servidor estará rodando em `http://localhost:3000`.
 
 ## Como testar a API
 Para testar esta API, é altamente recomendado usar uma ferramenta como o Postman ou Insomnia, pois elas gerenciam automaticamente os cookies de sessão necessários para a autenticação.
+Eu utilizei para os testes o Postman, e indico o uso dele, conforme pré-requisito acima.
 
 ### 1. Registrar um Novo Cliente (Público)
 POST `http://localhost:3000/api/clientes/registrar`
