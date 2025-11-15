@@ -1,81 +1,83 @@
-/* 
-Nome: Felipe de Oliveira Guimarães Bataglini
+/* Nome: Felipe de Oliveira Guimarães Bataglini
 RA: 2475421
 Turma: EC48B - C81
 */
 
-// controllers/pedidoController.js
-const Pedido = require('../models/pedidoModel');
-const Produto = require('../models/produtoModel');
-const Cliente = require('../models/clienteModel');
+const Pedido = require('../classes/Pedido');
+const Logger = require('../Logger');
 
-/**
- * Cria um novo pedido.
- * @param {object} dadosPedido - Dados do pedido ({ clienteId, itens, enderecoEntrega }).
- * @returns {Promise<object>} O documento do pedido salvo.
- */
-async function createPedido(dadosPedido) {
-  const { cliente: clienteId, itens } = dadosPedido;
+// CREATE
+exports.createPedido = async (req, res) => {
+  try {
+    // Pega o ID do cliente da SESSÃO, não do body (mais seguro)
+    const clienteId = req.session.user.id;
+    
+    const dadosPedido = {
+      ...req.body,
+      cliente: clienteId // Garante que o pedido é do usuário logado
+    };
 
-  // 1. Validar se o cliente existe
-  const cliente = await Cliente.findById(clienteId);
-  if (!cliente) {
-    throw new Error('Cliente não encontrado.');
+    // A validação de campos ocorre no construtor da classe
+    const pedido = new Pedido(dadosPedido);
+    const pedidoSalvo = await pedido.salvar();
+    res.status(201).json(pedidoSalvo);
+  } catch (error) {
+    Logger.logError(error);
+    res.status(400).json({ error: error.message });
   }
+};
 
-  let valorTotal = 0;
-  const itensProcessados = [];
+// READ (Pedidos do usuário logado)
+exports.getMeusPedidos = async (req, res) => {
+  try {
+    const clienteId = req.session.user.id;
+    const pedidos = await Pedido.buscarPorCliente(clienteId);
+    res.status(200).json(pedidos);
+  } catch (error) {
+    Logger.logError(error);
+    res.status(500).json({ error: 'Erro ao buscar pedidos.' });
+  }
+};
 
-  // 2. Processar cada item do pedido
-  for (const item of itens) {
-    const produto = await Produto.findById(item.produtoId);
-
-    if (!produto) {
-      throw new Error(`Produto com ID ${item.produtoId} não encontrado.`);
+// READ (By ID)
+exports.getPedidoById = async (req, res) => {
+  try {
+    const pedido = await Pedido.buscarPorId(req.params.id);
+    if (!pedido) {
+      return res.status(404).json({ error: 'Pedido não encontrado.' });
+    }
+    
+    // Verifica se o pedido pertence ao usuário logado
+    if (pedido.cliente.toString() !== req.session.user.id) {
+        return res.status(403).json({ error: 'Acesso negado a este pedido.' });
     }
 
-    if (produto.quantidadeEstoque < item.quantidade) {
-      throw new Error(`Estoque insuficiente para o produto: ${produto.nome}.`);
+    res.status(200).json(pedido);
+  } catch (error) {
+    Logger.logError(error);
+    res.status(500).json({ error: 'Erro ao buscar pedido.' });
+  }
+};
+
+// UPDATE (Status)
+exports.updatePedidoStatus = async (req, res) => {
+   try {
+    // Apenas o status pode ser atualizado por este controller
+    const { status } = req.body;
+    if (!status) {
+         return res.status(400).json({ error: 'Campo "status" é obrigatório.' });
     }
 
-    // 3. Decrementar o estoque
-    produto.quantidadeEstoque -= item.quantidade;
-    await produto.save();
-
-    // 4. Calcular o subtotal e o valor total
-    const subtotal = item.quantidade * produto.preco;
-    valorTotal += subtotal;
-
-    itensProcessados.push({
-      produtoId: item.produtoId,
-      nomeProduto: produto.nome,
-      quantidade: item.quantidade,
-      precoUnitario: produto.preco,
-    });
+    // (Em um app real, apenas um ADMIN poderia mudar o status,
+    // mas para este projeto, vamos permitir que o usuário mude)
+    const pedido = await Pedido.atualizar(req.params.id, { status });
+    
+    if (!pedido) {
+      return res.status(404).json({ error: 'Pedido não encontrado.' });
+    }
+    res.status(200).json(pedido);
+  } catch (error) {
+    Logger.logError(error);
+    res.status(400).json({ error: error.message });
   }
-
-  // 5. Criar o pedido com os dados processados
-  const novoPedido = new Pedido({
-    cliente: clienteId,
-    itens: itensProcessados,
-    valorTotal: valorTotal,
-    status: 'Processando', // Status inicial
-    enderecoEntrega: dadosPedido.enderecoEntrega || cliente.endereco, // Usa o endereço do pedido ou o do cliente
-  });
-
-  return await novoPedido.save();
-}
-
-/**
- * Busca todos os pedidos de um cliente específico.
- * @param {string} clienteId - O ID do cliente.
- * @returns {Promise<Array<object>>} Uma lista de pedidos do cliente.
- */
-async function getPedidosByCliente(clienteId) {
-  return await Pedido.find({ cliente: clienteId }).populate('itens.produtoId', 'nome preco');
-}
-
-module.exports = {
-  createPedido,
-  getPedidosByCliente,
 };

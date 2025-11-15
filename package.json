@@ -1,7 +1,7 @@
 {
-  "name": "ecommerce-backend",
+  "name": "projeto-2-backend-express",
   "version": "1.0.0",
-  "description": "Projeto 1 para a disciplina de Programacao Web Back-End com o tema de e-commerce.",
+  "description": "Projeto 2 da disciplina de Programacao Web Back-End (EC48B)",
   "main": "app.js",
   "scripts": {
     "start": "node app.js"
@@ -10,6 +10,9 @@
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^5.1.1",
-    "mongoose": "^8.0.0"
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-session": "^1.18.0",
+    "mongoose": "^8.4.1"
   }
 }
