@@ -1,15 +1,19 @@
-# Projeto 1 - E-commerce API
-Este projeto consiste em uma API back-end para um sistema de e-commerce, desenvolvida como Projeto 1 da disciplina de **Programação Web Back-End**. A aplicação foi construída utilizando Node.js, com MongoDB como banco de dados.
+# Projeto 2 - E-commerce API com Express.js
+Este projeto consiste em uma API back-end para um sistema de e-commerce, desenvolvida como **Projeto 2** da disciplina de **Programação Web Back-End**. A aplicação utiliza as classes do Projeto 1 e as evolui para uma **API RESTful** completa, utilizando **Express.js**, **MongoDB** e um sistema de **autenticação baseada em sessões**.
 
 ## Funcionalidades Principais
-* **Gerenciamento de Produtos:** API completa com operações de Criar, Ler, Atualizar e Deletar (CRUD) produtos.
-* **Gerenciamento de Clientes:** Endpoint para registro de novos clientes com armazenamento seguro de senhas (hash).
-* **Sistema de Pedidos:** Lógica para criação de pedidos, vinculando clientes a produtos, com validação de estoque.
-* **Validação de Dados:** Verificação de campos obrigatórios em todas as rotas de criação e atualização.
-* **Log de Erros:** Sistema robusto que captura e armazena todas as exceções em um arquivo `error.txt` para facilitar a depuração.
+* **API RESTful:** Endpoints para CRUD de Produtos, Pedidos e Clientes.
+* **Autenticação e Sessões:** Rotina de login (`/api/auth/login`) e proteção de rotas privadas (como criar produtos ou pedidos) usando `express-session`.
+* **Gerenciamento de Produtos:** API com operações de Criar, Ler, Atualizar e Deletar (CRUD) produtos.
+* **Gerenciamento de Clientes:** Endpoint para registro de novos clientes e consulta de dados do usuário logado.
+* **Sistema de Pedidos:** Lógica para criação de pedidos, vinculando o cliente da sessão aos produtos, com validação de estoque.
+* **Validação de Dados:** Verificação de campos obrigatórios nas classes e controllers.
+* **Log de Erros:** Sistema robusto que captura e armazena todas as exceções em um arquivo `error.log` para facilitar a depuração.
 
 ## Tecnologias Utilizadas
 * **Node.js:** Ambiente de execução do lado do servidor.
+* **Express:** Framework para a aplicação web e API.
+* **express-session:** Gerenciamento de sessões para autenticação.
 * **MongoDB:** Banco de dados NoSQL para armazenamento dos dados.
 * **Mongoose:** Biblioteca para modelagem de objetos do MongoDB.
 * **bcrypt:** Biblioteca para hashing de senhas.
@@ -46,8 +50,78 @@ DB_NAME=ecommerceDB
 PORT=3000
 ```
 
-### 5. Iniciando o teste
-Para rodar o teste completo da API, execute o comando abaixo no terminal, dentro da pasta raiz do projeto.
+### 5. Iniciando o servidor
+Para iniciar o servidor da API, execute o comando abaixo no terminal:
 ```sh
-node app.js
+npm start
 ```
+O servidor estará rodando em `http://localhost:3000`.
+
+## Como testar a API
+Para testar esta API, é altamente recomendado usar uma ferramenta como o Postman ou Insomnia, pois elas gerenciam automaticamente os cookies de sessão necessários para a autenticação.
+
+### 1. Registrar um Novo Cliente (Público)
+POST `http://localhost:3000/api/clientes/registrar`
+Body (JSON):
+```sh
+{
+  "nome": "Felipe Bataglini",
+  "email": "felipe@teste.com",
+  "password": "senha123",
+  "endereco": {
+    "rua": "Rua X",
+    "numero": "100",
+    "cidade": "Cidade Y",
+    "estado": "SP",
+    "cep": "12345-678"
+  }
+}
+```
+
+### 2. Fazer login (Público)
+POST `http://localhost:3000/api/auth/login`
+Body (JSON):
+```sh
+{
+  "email": "felipe@teste.com",
+  "password": "senha123"
+}
+```
+
+### 3. Criar um Produto (Rota Protegida)
+_Esta rota só funcionará se você estiver logado (passo 2)._
+POST `http://localhost:3000/api/produtos`
+Body (JSON):
+```sh
+{
+  "nome": "Notebook Gamer",
+  "descricao": "Notebook de alta performance",
+  "preco": 5000,
+  "quantidadeEstoque": 10,
+  "categoria": "Eletrônicos"
+}
+```
+
+### 4. Criar um Pedido (Rota Protegida)
+_Esta rota usa o ID do usuário logado (da sessão) e o ID do produto._
+POST `http://localhost:3000/api/pedidos`
+Body (JSON):
+```sh
+{
+  "itens": [
+    {
+      "produtoId": "ID_DO_PRODUTO_CRIADO_NO_PASSO_3",
+      "quantidade": 1
+    }
+  ]
+}
+```
+
+### 5. Listar produtos (Público)
+GET `http://localhost:3000/api/produtos`
+
+### 6. Ver Meus Pedidos (Rota Protegida)
+GET `http://localhost:3000/api/pedidos/meuspedidos`
+
+### 7. Fazer Logout (Protegido)
+POST `http://localhost:3000/api/auth/logout`
